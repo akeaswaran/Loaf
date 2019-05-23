@@ -52,7 +52,13 @@ final public class Loaf {
         // The top and bottom margins to use for the labels
         let verticalMargin: CGFloat
         
-        public init(backgroundColor: UIColor, messageLabelTextColor: UIColor = .lightText, titleLabelTextColor: UIColor = .white, tintColor: UIColor = .white, messageLabelFont: UIFont = UIFont.systemFont(ofSize: 12, weight: .regular), titleLabelFont: UIFont = UIFont.systemFont(ofSize: 14, weight: .medium), icon: UIImage? = Icon.info, textAlignment: NSTextAlignment = .left, iconAlignment: IconAlignment = .left, verticalMargin: CGFloat = 10.0) {
+        // The left and right margins to use for the labels
+        let horizontalMargin: CGFloat
+        
+        // The width to use for the view
+        let width: CGFloat
+        
+        public init(backgroundColor: UIColor, messageLabelTextColor: UIColor = .lightText, titleLabelTextColor: UIColor = .white, tintColor: UIColor = .white, messageLabelFont: UIFont = UIFont.systemFont(ofSize: 12, weight: .regular), titleLabelFont: UIFont = UIFont.systemFont(ofSize: 14, weight: .medium), icon: UIImage? = Icon.info, textAlignment: NSTextAlignment = .left, iconAlignment: IconAlignment = .left, verticalMargin: CGFloat = 10.0, horizontalMargin: CGFloat = 10.0, width: CGFloat = 280.0) {
             self.backgroundColor = backgroundColor
             self.messageLabelTextColor = messageLabelTextColor
             self.tintColor = tintColor
@@ -63,6 +69,8 @@ final public class Loaf {
             self.textAlignment = textAlignment
             self.iconAlignment = iconAlignment
             self.verticalMargin = verticalMargin
+            self.horizontalMargin = horizontalMargin
+            self.width = width
         }
     }
     
@@ -208,6 +216,8 @@ final class LoafViewController: UIViewController {
     let messageLabel = UILabel()
     let imageView = UIImageView(image: nil)
     var verticalMargin: CGFloat = 10.0
+    var loafWidth: CGFloat = 280
+    var horizontalMargin: CGFloat = 10.0
     var messageLabelFont = UIFont.systemFont(ofSize: 12, weight: .regular)
     var textAlignment: NSTextAlignment = .left
     var transDelegate: UIViewControllerTransitioningDelegate
@@ -223,13 +233,15 @@ final class LoafViewController: UIViewController {
             self.titleLabelFont = style.titleLabelFont
             self.textAlignment = style.textAlignment
             self.verticalMargin = style.verticalMargin
+            self.horizontalMargin = style.horizontalMargin
+            self.loafWidth = style.width
         }
         
         var height = max(toast.message.heightWithConstrainedWidth(width: 240, font: messageLabelFont) + ((self.verticalMargin * 2) * 0.6), 40)
         if (loaf.title != nil) {
             height = max(toast.message.heightWithConstrainedWidth(width: 240, font: messageLabelFont) + 4 + toast.title!.heightWithConstrainedWidth(width: 240, font: titleLabelFont) + (self.verticalMargin * 2), 40)
         }
-        preferredContentSize = CGSize(width: 280, height: height)
+        preferredContentSize = CGSize(width: self.loafWidth, height: height)
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -329,7 +341,7 @@ final class LoafViewController: UIViewController {
             switch alignment {
             case .left:
                 NSLayoutConstraint.activate([
-                    imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+                    imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant:  self.horizontalMargin),
                     imageView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
                     imageView.heightAnchor.constraint(equalToConstant: 28),
                     imageView.widthAnchor.constraint(equalToConstant: 28)
@@ -338,9 +350,8 @@ final class LoafViewController: UIViewController {
                 if (loaf.title != nil) {
                     NSLayoutConstraint.activate([
                         titleLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: self.verticalMargin),
-                        titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
+                        titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -1 * self.horizontalMargin),
                         titleLabel.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 10),
-//                        titleLabel.heightAnchor.constraint(equalToConstant: 16.0),
                         messageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor),
                         messageLabel.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 10),
                         messageLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -4),
@@ -356,7 +367,7 @@ final class LoafViewController: UIViewController {
                 }
             case .right:
                 NSLayoutConstraint.activate([
-                    imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
+                    imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -1 * self.horizontalMargin),
                     imageView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
                     imageView.heightAnchor.constraint(equalToConstant: 28),
                     imageView.widthAnchor.constraint(equalToConstant: 28),
@@ -365,17 +376,16 @@ final class LoafViewController: UIViewController {
                 if (loaf.title != nil) {
                     NSLayoutConstraint.activate([
                         titleLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: self.verticalMargin),
-                        titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+                        titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant:  self.horizontalMargin),
                         titleLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor, constant: -4),
-//                        titleLabel.heightAnchor.constraint(equalToConstant: 16.0),
                         messageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor),
-                        messageLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+                        messageLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant:  self.horizontalMargin),
                         messageLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor, constant: -4),
                         messageLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -1 * self.verticalMargin)
                     ])
                 } else {
                     NSLayoutConstraint.activate([
-                        messageLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+                        messageLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant:  self.horizontalMargin),
                         messageLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor, constant: -4),
                         messageLabel.topAnchor.constraint(equalTo: view.topAnchor),
                         messageLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor)
@@ -386,17 +396,17 @@ final class LoafViewController: UIViewController {
             if (loaf.title != nil) {
                 NSLayoutConstraint.activate([
                     titleLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: self.verticalMargin),
-                    titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
-                    titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
+                    titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant:  self.horizontalMargin),
+                    titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -1 * self.horizontalMargin),
                     messageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor),
-                    messageLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
-                    messageLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
+                    messageLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant:  self.horizontalMargin),
+                    messageLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -1 * self.horizontalMargin),
                     messageLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -1 * self.verticalMargin)
                 ])
             } else {
                 NSLayoutConstraint.activate([
-                    messageLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
-                    messageLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
+                    messageLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant:  self.horizontalMargin),
+                    messageLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -1 * self.horizontalMargin),
                     messageLabel.topAnchor.constraint(equalTo: view.topAnchor),
                     messageLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor)
                 ])
