@@ -227,7 +227,7 @@ final class LoafViewController: UIViewController {
         
         var height = max(toast.message.heightWithConstrainedWidth(width: 240, font: messageLabelFont) + ((self.verticalMargin * 2) * 0.6), 40)
         if (loaf.title != nil) {
-            height = max(toast.message.heightWithConstrainedWidth(width: 240, font: messageLabelFont) + 4 + toast.title!.heightWithConstrainedWidth(width: 240, font: titleLabelFont) + ((self.verticalMargin * 2) * 0.6), 40)
+            height = max(toast.message.heightWithConstrainedWidth(width: 240, font: messageLabelFont) + 4 + toast.title!.heightWithConstrainedWidth(width: 240, font: titleLabelFont) + (self.verticalMargin * 2), 40)
         }
         preferredContentSize = CGSize(width: 280, height: height)
     }
