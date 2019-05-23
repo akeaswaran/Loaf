@@ -26,14 +26,20 @@ final public class Loaf {
         /// The background color of the loaf.
         let backgroundColor: UIColor
         
-        /// The color of the label's text
-        let textColor: UIColor
+        /// The color of the label's title text
+        let messageLabelTextColor: UIColor
         
         /// The color of the icon (Assuming it's rendered as template)
         let tintColor: UIColor
         
-        /// The font of the label
-        let font: UIFont
+        /// The messageLabelFont of the title label
+        let messageLabelFont: UIFont
+        
+        /// The color of the label's title text
+        let titleLabelTextColor: UIColor
+        
+        /// The messageLabelFont of the title label
+        let titleLabelFont: UIFont
         
         /// The icon on the loaf
         let icon: UIImage?
@@ -43,11 +49,13 @@ final public class Loaf {
         /// The position of the icon
         let iconAlignment: IconAlignment
         
-        public init(backgroundColor: UIColor, textColor: UIColor = .white, tintColor: UIColor = .white, font: UIFont = UIFont.systemFont(ofSize: 14, weight: .medium), icon: UIImage? = Icon.info, textAlignment: NSTextAlignment = .left, iconAlignment: IconAlignment = .left) {
+        public init(backgroundColor: UIColor, messageLabelTextColor: UIColor = .lightText, titleLabelTextColor: UIColor = .white, tintColor: UIColor = .white, messageLabelFont: UIFont = UIFont.systemFont(ofSize: 12, weight: .regular), titleLabelFont: UIFont = UIFont.systemFont(ofSize: 14, weight: .medium), icon: UIImage? = Icon.info, textAlignment: NSTextAlignment = .left, iconAlignment: IconAlignment = .left) {
             self.backgroundColor = backgroundColor
-            self.textColor = textColor
+            self.messageLabelTextColor = messageLabelTextColor
             self.tintColor = tintColor
-            self.font = font
+            self.messageLabelFont = messageLabelFont
+            self.titleLabelTextColor = titleLabelTextColor
+            self.titleLabelFont = titleLabelFont
             self.icon = icon
             self.textAlignment = textAlignment
             self.iconAlignment = iconAlignment
@@ -96,6 +104,7 @@ final public class Loaf {
     /// - long: 8 seconds
     /// - custom: A custom duration (usage: `.custom(5.0)`)
     public enum Duration {
+        case veryShort
         case short
         case average
         case long
@@ -103,6 +112,7 @@ final public class Loaf {
         
         var length: TimeInterval {
             switch self {
+            case .veryShort: return 1.0
             case .short:   return 2.0
             case .average: return 4.0
             case .long:    return 8.0
@@ -121,6 +131,7 @@ final public class Loaf {
     }
     
     // MARK: - Properties
+    var title: String?
     var message: String
     var state: State
     var location: Location
@@ -131,12 +142,13 @@ final public class Loaf {
     weak var sender: UIViewController?
     
     // MARK: - Public methods
-    public init(_ message: String,
+    public init(title: String? = nil, message: String,
                 state: State = .info,
                 location: Location = .bottom,
                 presentingDirection: Direction = .vertical,
                 dismissingDirection: Direction = .vertical,
                 sender: UIViewController) {
+        self.title = title
         self.message = message
         self.state = state
         self.location = location
@@ -187,9 +199,11 @@ protocol LoafDelegate: AnyObject {
 final class LoafViewController: UIViewController {
     var loaf: Loaf
     
-    let label = UILabel()
+    let titleLabel = UILabel()
+    var titleLabelFont = UIFont.systemFont(ofSize: 14, weight: .medium)
+    let messageLabel = UILabel()
     let imageView = UIImageView(image: nil)
-    var font = UIFont.systemFont(ofSize: 14, weight: .medium)
+    var messageLabelFont = UIFont.systemFont(ofSize: 12, weight: .regular)
     var textAlignment: NSTextAlignment = .left
     var transDelegate: UIViewControllerTransitioningDelegate
     weak var delegate: LoafDelegate?
@@ -200,11 +214,15 @@ final class LoafViewController: UIViewController {
         super.init(nibName: nil, bundle: nil)
         
         if case let Loaf.State.custom(style) = loaf.state {
-            self.font = style.font
+            self.messageLabelFont = style.messageLabelFont
+            self.titleLabelFont = style.titleLabelFont
             self.textAlignment = style.textAlignment
         }
         
-        let height = max(toast.message.heightWithConstrainedWidth(width: 240, font: font) + 12, 40)
+        var height = max(toast.message.heightWithConstrainedWidth(width: 240, font: messageLabelFont) + 12, 40)
+        if (loaf.title != nil) {
+            height = max(toast.message.heightWithConstrainedWidth(width: 240, font: messageLabelFont) + 12 + 4 + toast.title!.heightWithConstrainedWidth(width: 240, font: titleLabelFont) + 12, 40)
+        }
         preferredContentSize = CGSize(width: 280, height: height)
     }
     
@@ -215,43 +233,64 @@ final class LoafViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        label.text = loaf.message
-        label.numberOfLines = 0
-        label.lineBreakMode = .byWordWrapping
-        label.textColor = .white
-        label.font = font
-        label.textAlignment = textAlignment
-        label.setContentCompressionResistancePriority(.required, for: .vertical)
-        label.translatesAutoresizingMaskIntoConstraints = false
+        messageLabel.text = loaf.message
+        messageLabel.numberOfLines = 0
+        messageLabel.lineBreakMode = .byWordWrapping
+        messageLabel.textColor = .white
+        messageLabel.font = messageLabelFont
+        messageLabel.textAlignment = textAlignment
+        messageLabel.setContentCompressionResistancePriority(.required, for: .vertical)
+        messageLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+//        messageLabel.layer.borderColor = UIColor.blue.cgColor
+//        messageLabel.layer.borderWidth = 2.0
+        
+        if (loaf.title != nil) {
+            titleLabel.text = loaf.title
+            titleLabel.numberOfLines = 0
+            titleLabel.lineBreakMode = .byWordWrapping
+            titleLabel.textColor = .white
+            titleLabel.font = titleLabelFont
+            titleLabel.textAlignment = textAlignment
+            titleLabel.setContentCompressionResistancePriority(.required, for: .vertical)
+            titleLabel.translatesAutoresizingMaskIntoConstraints = false
+            
+//            titleLabel.layer.borderColor = UIColor.red.cgColor
+//            titleLabel.layer.borderWidth = 2.0
+        }
         
         imageView.tintColor = .white
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
         
         switch loaf.state {
-        case .success:
-            imageView.image = Loaf.Icon.success
-            view.backgroundColor = UIColor(hexString: "#2ecc71")
-            constrainWithIconAlignment(.left)
-        case .warning:
-            imageView.image = Loaf.Icon.warning
-            view.backgroundColor = UIColor(hexString: "##f1c40f")
-            constrainWithIconAlignment(.left)
-        case .error:
-            imageView.image = Loaf.Icon.error
-            view.backgroundColor = UIColor(hexString: "##e74c3c")
-            constrainWithIconAlignment(.left)
-        case .info:
-            imageView.image = Loaf.Icon.info
-            view.backgroundColor = UIColor(hexString: "##34495e")
-            constrainWithIconAlignment(.left)
-        case .custom(style: let style):
-            imageView.image = style.icon
-            view.backgroundColor = style.backgroundColor
-            imageView.tintColor = style.tintColor
-            label.textColor = style.textColor
-            label.font = style.font
-            constrainWithIconAlignment(style.iconAlignment, showsIcon: imageView.image != nil)
+            case .success:
+                imageView.image = Loaf.Icon.success
+                view.backgroundColor = UIColor(hexString: "#2ecc71")
+                constrainWithIconAlignment(.left)
+            case .warning:
+                imageView.image = Loaf.Icon.warning
+                view.backgroundColor = UIColor(hexString: "##f1c40f")
+                constrainWithIconAlignment(.left)
+            case .error:
+                imageView.image = Loaf.Icon.error
+                view.backgroundColor = UIColor(hexString: "##e74c3c")
+                constrainWithIconAlignment(.left)
+            case .info:
+                imageView.image = Loaf.Icon.info
+                view.backgroundColor = UIColor(hexString: "##34495e")
+                constrainWithIconAlignment(.left)
+            case .custom(style: let style):
+                imageView.image = style.icon
+                view.backgroundColor = style.backgroundColor
+                imageView.tintColor = style.tintColor
+                if (title != nil) {
+                    titleLabel.textColor = style.titleLabelTextColor
+                    titleLabel.font = style.titleLabelFont
+                }
+                messageLabel.textColor = style.messageLabelTextColor
+                messageLabel.font = style.messageLabelFont
+                constrainWithIconAlignment(style.iconAlignment, showsIcon: imageView.image != nil)
         }
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
@@ -273,7 +312,10 @@ final class LoafViewController: UIViewController {
     }
     
     private func constrainWithIconAlignment(_ alignment: Loaf.Style.IconAlignment, showsIcon: Bool = true) {
-        view.addSubview(label)
+        if (loaf.title != nil) {
+            view.addSubview(titleLabel)
+        }
+        view.addSubview(messageLabel)
         
         if showsIcon {
             view.addSubview(imageView)
@@ -284,33 +326,75 @@ final class LoafViewController: UIViewController {
                     imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
                     imageView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
                     imageView.heightAnchor.constraint(equalToConstant: 28),
-                    imageView.widthAnchor.constraint(equalToConstant: 28),
-                    
-                    label.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 10),
-                    label.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -4),
-                    label.topAnchor.constraint(equalTo: view.topAnchor),
-                    label.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+                    imageView.widthAnchor.constraint(equalToConstant: 28)
                 ])
+
+                if (loaf.title != nil) {
+                    NSLayoutConstraint.activate([
+                        titleLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 10),
+                        titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
+                        titleLabel.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 10),
+//                        titleLabel.heightAnchor.constraint(equalToConstant: 16.0),
+                        messageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor),
+                        messageLabel.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 10),
+                        messageLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -4),
+                        messageLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -10)
+                    ])
+                } else {
+                    NSLayoutConstraint.activate([
+                        messageLabel.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 10),
+                        messageLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -4),
+                        messageLabel.topAnchor.constraint(equalTo: view.topAnchor),
+                        messageLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+                    ])
+                }
             case .right:
                 NSLayoutConstraint.activate([
                     imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
                     imageView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
                     imageView.heightAnchor.constraint(equalToConstant: 28),
                     imageView.widthAnchor.constraint(equalToConstant: 28),
-                    
-                    label.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
-                    label.trailingAnchor.constraint(equalTo: imageView.leadingAnchor, constant: -4),
-                    label.topAnchor.constraint(equalTo: view.topAnchor),
-                    label.bottomAnchor.constraint(equalTo: view.bottomAnchor)
                 ])
+                
+                if (loaf.title != nil) {
+                    NSLayoutConstraint.activate([
+                        titleLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 10),
+                        titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+                        titleLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor, constant: -4),
+//                        titleLabel.heightAnchor.constraint(equalToConstant: 16.0),
+                        messageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor),
+                        messageLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+                        messageLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor, constant: -4),
+                        messageLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -10)
+                    ])
+                } else {
+                    NSLayoutConstraint.activate([
+                        messageLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+                        messageLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor, constant: -4),
+                        messageLabel.topAnchor.constraint(equalTo: view.topAnchor),
+                        messageLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+                    ])
+                }
             }
         } else {
-            NSLayoutConstraint.activate([
-                label.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
-                label.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
-                label.topAnchor.constraint(equalTo: view.topAnchor),
-                label.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-            ])
+            if (loaf.title != nil) {
+                NSLayoutConstraint.activate([
+                    titleLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 10),
+                    titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+                    titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
+                    messageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor),
+                    messageLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+                    messageLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
+                    messageLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -10)
+                ])
+            } else {
+                NSLayoutConstraint.activate([
+                    messageLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+                    messageLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
+                    messageLabel.topAnchor.constraint(equalTo: view.topAnchor),
+                    messageLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+                ])
+            }
         }
     }
 }
