@@ -28,11 +28,12 @@ class Examples: UITableViewController {
         case custom1  = "This will showcase using custom colors and font"
         case custom2  = "This will showcase using right icon alignment"
         case custom3  = "This will showcase using no icon"
+        case custom4  = "This will showcase using a title"
         
         static let grouped: [[Example]] = [[.success, .error, .warning, .info],
                                            [.bottom, .top],
                                            [.vertical, .left, .right, .mix],
-                                           [.custom1, .custom2, .custom3]]
+                                           [.custom1, .custom2, .custom3, .custom4]]
     }
     
     private var isDarkMode = false
@@ -50,9 +51,9 @@ class Examples: UITableViewController {
         tableView.backgroundColor                        = isDarkMode ? .groupTableViewBackground : .black
         
         if isDarkMode {
-            Loaf("Switched to light mode", state: .custom(.init(backgroundColor: .black, icon: UIImage(named: "moon"))), sender: self).show(.short)
+            Loaf(message: "Switched to light mode", state: .custom(.init(backgroundColor: .black, icon: UIImage(named: "moon"))), sender: self).show(.short)
         } else {
-            Loaf("Switched to dark mode", state: .custom(.init(backgroundColor: .white, textColor: .black, tintColor: .black, icon: UIImage(named: "moon"))), sender: self).show(.short)
+            Loaf(message: "Switched to dark mode", state: .custom(.init(backgroundColor: .white, messageLabelTextColor: .black, tintColor: .black, icon: UIImage(named: "moon"))), sender: self).show(.short)
         }
         
         tableView.reloadData()
@@ -73,36 +74,38 @@ class Examples: UITableViewController {
         let example = Example.grouped[indexPath.section][indexPath.row]
         switch example {
         case .success:
-            Loaf(example.rawValue, state: .success, sender: self).show()
+            Loaf(message: example.rawValue, state: .success, sender: self).show()
         case .error:
-            Loaf(example.rawValue, state: .error, sender: self).show()
+            Loaf(message: example.rawValue, state: .error, sender: self).show()
         case .warning:
-            Loaf(example.rawValue, state: .warning, sender: self).show()
+            Loaf(message: example.rawValue, state: .warning, sender: self).show()
         case .info:
-            Loaf(example.rawValue, state: .info, sender: self).show()
+            Loaf(message: example.rawValue, state: .info, sender: self).show()
             
         case .bottom:
-            Loaf(example.rawValue, sender: self).show { wasTapped in
+            Loaf(message: example.rawValue, sender: self).show { wasTapped in
                 print(wasTapped ? "Tapped" : "Dismissed")
             }
         case .top:
-            Loaf(example.rawValue, location: .top, sender: self).show()
+            Loaf(message: example.rawValue, location: .top, sender: self).show()
             
         case .vertical:
-            Loaf(example.rawValue, sender: self).show(.short)
+            Loaf(message: example.rawValue, sender: self).show(.short)
         case .left:
-            Loaf(example.rawValue, presentingDirection: .left, dismissingDirection: .left, sender: self).show(.short)
+            Loaf(message: example.rawValue, presentingDirection: .left, dismissingDirection: .left, sender: self).show(.short)
         case .right:
-            Loaf(example.rawValue, presentingDirection: .right, dismissingDirection: .right, sender: self).show(.short)
+            Loaf(message: example.rawValue, presentingDirection: .right, dismissingDirection: .right, sender: self).show(.short)
         case .mix:
-            Loaf(example.rawValue, presentingDirection: .left, dismissingDirection: .vertical, sender: self).show(.short)
+            Loaf(message: example.rawValue, presentingDirection: .left, dismissingDirection: .vertical, sender: self).show(.short)
             
         case .custom1:
-            Loaf(example.rawValue, state: .custom(.init(backgroundColor: .purple, textColor: .yellow, tintColor: .green, font: .systemFont(ofSize: 18, weight: .bold), icon: Loaf.Icon.success)), sender: self).show()
+            Loaf(message: example.rawValue, state: .custom(.init(backgroundColor: .purple, messageLabelTextColor: .yellow, tintColor: .green, messageLabelFont: .systemFont(ofSize: 18, weight: .bold), icon: Loaf.Icon.success)), sender: self).show()
         case .custom2:
-            Loaf(example.rawValue, state: .custom(.init(backgroundColor: .purple, iconAlignment: .right)), sender: self).show()
+            Loaf(message: example.rawValue, state: .custom(.init(backgroundColor: .purple, iconAlignment: .right)), sender: self).show()
         case .custom3:
-            Loaf(example.rawValue, state: .custom(.init(backgroundColor: .black, icon: nil, textAlignment: .center)), sender: self).show()
+            Loaf(message: example.rawValue, state: .custom(.init(backgroundColor: .black, icon: nil, textAlignment: .center)), sender: self).show()
+        case .custom4:
+            Loaf(title: "Test title", message: example.rawValue, state: .custom(.init(backgroundColor: .black, icon: nil, textAlignment: .left)), sender: self).show()
         }
         
         tableView.deselectRow(at: indexPath, animated: true)
