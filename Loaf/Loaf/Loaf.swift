@@ -55,10 +55,13 @@ final public class Loaf {
         // The left and right margins to use for the labels
         let horizontalMargin: CGFloat
         
+        // The height to use for the icon
+        let iconHeight: CGFloat
+        
         // The width to use for the view
         let width: CGFloat
         
-        public init(backgroundColor: UIColor, messageLabelTextColor: UIColor = .lightText, titleLabelTextColor: UIColor = .white, tintColor: UIColor = .white, messageLabelFont: UIFont = UIFont.systemFont(ofSize: 12, weight: .regular), titleLabelFont: UIFont = UIFont.systemFont(ofSize: 14, weight: .medium), icon: UIImage? = Icon.info, textAlignment: NSTextAlignment = .left, iconAlignment: IconAlignment = .left, verticalMargin: CGFloat = 10.0, horizontalMargin: CGFloat = 10.0, width: CGFloat = 280.0) {
+        public init(backgroundColor: UIColor, messageLabelTextColor: UIColor = .lightText, titleLabelTextColor: UIColor = .white, tintColor: UIColor = .white, messageLabelFont: UIFont = UIFont.systemFont(ofSize: 12, weight: .regular), titleLabelFont: UIFont = UIFont.systemFont(ofSize: 14, weight: .medium), icon: UIImage? = Icon.info, iconHeight: CGFloat = 20.0, textAlignment: NSTextAlignment = .left, iconAlignment: IconAlignment = .left, verticalMargin: CGFloat = 10.0, horizontalMargin: CGFloat = 10.0, width: CGFloat = 280.0) {
             self.backgroundColor = backgroundColor
             self.messageLabelTextColor = messageLabelTextColor
             self.tintColor = tintColor
@@ -66,6 +69,7 @@ final public class Loaf {
             self.titleLabelTextColor = titleLabelTextColor
             self.titleLabelFont = titleLabelFont
             self.icon = icon
+            self.iconHeight = iconHeight
             self.textAlignment = textAlignment
             self.iconAlignment = iconAlignment
             self.verticalMargin = verticalMargin
@@ -216,11 +220,14 @@ final class LoafViewController: UIViewController {
     let messageLabel = UILabel()
     let imageView = UIImageView(image: nil)
     var verticalMargin: CGFloat = 10.0
-    var loafWidth: CGFloat = 280
+    var iconHeight: CGFloat = 28.0
     var horizontalMargin: CGFloat = 10.0
+    var loafWidth: CGFloat = UIScreen.main.bounds.size.width - (2 * 15.0)
+    var hasImage: Bool = false
     var messageLabelFont = UIFont.systemFont(ofSize: 12, weight: .regular)
     var textAlignment: NSTextAlignment = .left
     var transDelegate: UIViewControllerTransitioningDelegate
+    
     weak var delegate: LoafDelegate?
     
     init(_ toast: Loaf) {
@@ -235,14 +242,21 @@ final class LoafViewController: UIViewController {
             self.verticalMargin = style.verticalMargin
             self.horizontalMargin = style.horizontalMargin
             self.loafWidth = style.width
+            self.hasImage = (style.icon != nil)
+            self.iconHeight = (style.icon != nil) ? style.iconHeight : 0.0
         }
         
-        var height = max(toast.message.heightWithConstrainedWidth(width: 240, font: messageLabelFont) + ((self.verticalMargin * 2) * 0.6), 40)
+        var calcValue = self.loaf.message.heightWithConstrainedWidth(width: self.loafWidth - (self.horizontalMargin * 2) - ((self.hasImage) ? (self.iconHeight + self.horizontalMargin) : 0), font: messageLabelFont)
+        var height = max(calcValue, 20)
+        var views: [UIView] = [messageLabel]
         if (loaf.title != nil) {
-            height = max(toast.message.heightWithConstrainedWidth(width: 240, font: messageLabelFont) + 4 + toast.title!.heightWithConstrainedWidth(width: 240, font: titleLabelFont) + (self.verticalMargin * 2), 40)
+            calcValue = self.loaf.title!.heightWithConstrainedWidth(width: self.loafWidth - (self.horizontalMargin * 2) - ((self.hasImage) ? (self.iconHeight + self.horizontalMargin) : 0), font: titleLabelFont)
+            height += max(calcValue, 20) + (self.verticalMargin / 2.0)
+            views.append(titleLabel)
         }
-        preferredContentSize = CGSize(width: self.loafWidth, height: height)
+        preferredContentSize = CGSize(width: self.loafWidth, height: max(height, self.iconHeight) + (2.0 * self.verticalMargin))
     }
+    
     
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -259,7 +273,7 @@ final class LoafViewController: UIViewController {
         messageLabel.textAlignment = textAlignment
         messageLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         messageLabel.translatesAutoresizingMaskIntoConstraints = false
-//        messageLabel.sizeToFit()
+        messageLabel.sizeToFit()
 //        messageLabel.layer.borderColor = UIColor.blue.cgColor
 //        messageLabel.layer.borderWidth = 2.0
         
@@ -272,7 +286,7 @@ final class LoafViewController: UIViewController {
             titleLabel.textAlignment = textAlignment
             titleLabel.setContentCompressionResistancePriority(.required, for: .vertical)
             titleLabel.translatesAutoresizingMaskIntoConstraints = false
-//            titleLabel.sizeToFit()
+            titleLabel.sizeToFit()
 //            titleLabel.layer.borderColor = UIColor.red.cgColor
 //            titleLabel.layer.borderWidth = 2.0
         }
@@ -282,33 +296,34 @@ final class LoafViewController: UIViewController {
         imageView.translatesAutoresizingMaskIntoConstraints = false
         
         switch loaf.state {
-            case .success:
-                imageView.image = Loaf.Icon.success
-                view.backgroundColor = UIColor(hexString: "#2ecc71")
-                constrainWithIconAlignment(.left)
-            case .warning:
-                imageView.image = Loaf.Icon.warning
-                view.backgroundColor = UIColor(hexString: "##f1c40f")
-                constrainWithIconAlignment(.left)
-            case .error:
-                imageView.image = Loaf.Icon.error
-                view.backgroundColor = UIColor(hexString: "##e74c3c")
-                constrainWithIconAlignment(.left)
-            case .info:
-                imageView.image = Loaf.Icon.info
-                view.backgroundColor = UIColor(hexString: "##34495e")
-                constrainWithIconAlignment(.left)
-            case .custom(style: let style):
-                imageView.image = style.icon
-                view.backgroundColor = style.backgroundColor
-                imageView.tintColor = style.tintColor
-                if (title != nil) {
-                    titleLabel.textColor = style.titleLabelTextColor
-                    titleLabel.font = style.titleLabelFont
-                }
-                messageLabel.textColor = style.messageLabelTextColor
-                messageLabel.font = style.messageLabelFont
-                constrainWithIconAlignment(style.iconAlignment, showsIcon: imageView.image != nil)
+        case .success:
+            imageView.image = Loaf.Icon.success
+            view.backgroundColor = UIColor(hexString: "#2ecc71")
+            constrainWithIconAlignment(.left)
+        case .warning:
+            imageView.image = Loaf.Icon.warning
+            view.backgroundColor = UIColor(hexString: "##f1c40f")
+            constrainWithIconAlignment(.left)
+        case .error:
+            imageView.image = Loaf.Icon.error
+            view.backgroundColor = UIColor(hexString: "##e74c3c")
+            constrainWithIconAlignment(.left)
+        case .info:
+            imageView.image = Loaf.Icon.info
+            view.backgroundColor = UIColor(hexString: "##34495e")
+            constrainWithIconAlignment(.left)
+        case .custom(style: let style):
+            imageView.image = style.icon
+            view.backgroundColor = style.backgroundColor
+            imageView.tintColor = style.tintColor
+            if (title != nil) {
+                titleLabel.textColor = style.titleLabelTextColor
+                titleLabel.font = style.titleLabelFont
+            }
+            messageLabel.textColor = style.messageLabelTextColor
+            messageLabel.font = style.messageLabelFont
+            constrainWithIconAlignment(style.iconAlignment, showsIcon: imageView.image != nil)
+            self.view.setNeedsLayout()
         }
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
@@ -331,7 +346,7 @@ final class LoafViewController: UIViewController {
     
     private func constrainWithIconAlignment(_ alignment: Loaf.Style.IconAlignment, showsIcon: Bool = true) {
         if (loaf.title != nil) {
-            view.addSubview(titleLabel)
+             view.addSubview(titleLabel)
         }
         view.addSubview(messageLabel)
         
@@ -343,26 +358,26 @@ final class LoafViewController: UIViewController {
                 NSLayoutConstraint.activate([
                     imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant:  self.horizontalMargin),
                     imageView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-                    imageView.heightAnchor.constraint(equalToConstant: 28),
-                    imageView.widthAnchor.constraint(equalToConstant: 28)
+                    imageView.heightAnchor.constraint(equalToConstant: self.iconHeight),
+                    imageView.widthAnchor.constraint(equalToConstant: self.iconHeight)
                 ])
-
+                
                 if (loaf.title != nil) {
                     NSLayoutConstraint.activate([
-                        titleLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: self.verticalMargin),
+                        titleLabel.topAnchor.constraint(greaterThanOrEqualTo: view.topAnchor, constant: self.verticalMargin),
                         titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -1 * self.horizontalMargin),
                         titleLabel.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 10),
                         messageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor),
                         messageLabel.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 10),
-                        messageLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -4),
-                        messageLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -1 * self.verticalMargin)
-                    ])
+                        messageLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: -1 * self.horizontalMargin),
+                        messageLabel.bottomAnchor.constraint(greaterThanOrEqualTo: view.bottomAnchor, constant: -1 * self.verticalMargin)
+                        ])
                     titleLabel.setContentHuggingPriority(.defaultHigh, for: .vertical)
                     messageLabel.setContentHuggingPriority(.defaultLow, for: .vertical)
                 } else {
                     NSLayoutConstraint.activate([
                         messageLabel.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 10),
-                        messageLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -4),
+                        messageLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -1 * self.horizontalMargin),
                         messageLabel.topAnchor.constraint(equalTo: view.topAnchor),
                         messageLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor)
                     ])
@@ -377,20 +392,20 @@ final class LoafViewController: UIViewController {
                 
                 if (loaf.title != nil) {
                     NSLayoutConstraint.activate([
-                        titleLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: self.verticalMargin),
+                        titleLabel.topAnchor.constraint(greaterThanOrEqualTo: view.topAnchor, constant: self.verticalMargin),
                         titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant:  self.horizontalMargin),
-                        titleLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor, constant: -4),
+                        titleLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor, constant: -1 * self.horizontalMargin),
                         messageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor),
-                        messageLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant:  self.horizontalMargin),
-                        messageLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor, constant: -4),
-                        messageLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -1 * self.verticalMargin)
-                    ])
+                        messageLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor, constant:  self.horizontalMargin),
+                        messageLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor, constant: -1 * self.horizontalMargin),
+                        messageLabel.bottomAnchor.constraint(greaterThanOrEqualTo: view.bottomAnchor, constant: -1 * self.verticalMargin)
+                        ])
                     titleLabel.setContentHuggingPriority(.defaultHigh, for: .vertical)
                     messageLabel.setContentHuggingPriority(.defaultLow, for: .vertical)
                 } else {
                     NSLayoutConstraint.activate([
                         messageLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant:  self.horizontalMargin),
-                        messageLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor, constant: -4),
+                        messageLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor, constant: -1 * self.horizontalMargin),
                         messageLabel.topAnchor.constraint(equalTo: view.topAnchor),
                         messageLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor)
                     ])
@@ -399,13 +414,13 @@ final class LoafViewController: UIViewController {
         } else {
             if (loaf.title != nil) {
                 NSLayoutConstraint.activate([
-                    titleLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: self.verticalMargin),
+                    titleLabel.topAnchor.constraint(greaterThanOrEqualTo: view.topAnchor, constant: self.verticalMargin),
                     titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant:  self.horizontalMargin),
                     titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -1 * self.horizontalMargin),
                     messageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor),
-                    messageLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant:  self.horizontalMargin),
-                    messageLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -1 * self.horizontalMargin),
-                    messageLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -1 * self.verticalMargin)
+                    messageLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor, constant:  self.horizontalMargin),
+                    messageLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: -1 * self.horizontalMargin),
+                    messageLabel.bottomAnchor.constraint(greaterThanOrEqualTo: view.bottomAnchor, constant: -1 * self.verticalMargin)
                 ])
                 titleLabel.setContentHuggingPriority(.defaultHigh, for: .vertical)
                 messageLabel.setContentHuggingPriority(.defaultLow, for: .vertical)
