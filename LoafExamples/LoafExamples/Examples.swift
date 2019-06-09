@@ -28,7 +28,7 @@ class Examples: UITableViewController {
         case custom1  = "This will showcase using custom colors and font"
         case custom2  = "This will showcase using right icon alignment"
         case custom3  = "This will showcase using no icon"
-        case custom4  = "This will showcase using a title with Loaf with multiple lines"
+        case custom4  = "This will showcase using a title with Loaf with multiple lines\nThis will showcase using a title with Loaf with multiple lines"
         
         static let grouped: [[Example]] = [[.success, .error, .warning, .info],
                                            [.bottom, .top],
