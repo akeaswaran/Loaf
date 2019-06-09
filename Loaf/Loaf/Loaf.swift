@@ -259,7 +259,7 @@ final class LoafViewController: UIViewController {
         messageLabel.textAlignment = textAlignment
         messageLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         messageLabel.translatesAutoresizingMaskIntoConstraints = false
-        
+//        messageLabel.sizeToFit()
 //        messageLabel.layer.borderColor = UIColor.blue.cgColor
 //        messageLabel.layer.borderWidth = 2.0
         
@@ -272,7 +272,7 @@ final class LoafViewController: UIViewController {
             titleLabel.textAlignment = textAlignment
             titleLabel.setContentCompressionResistancePriority(.required, for: .vertical)
             titleLabel.translatesAutoresizingMaskIntoConstraints = false
-            
+//            titleLabel.sizeToFit()
 //            titleLabel.layer.borderColor = UIColor.red.cgColor
 //            titleLabel.layer.borderWidth = 2.0
         }
@@ -357,6 +357,8 @@ final class LoafViewController: UIViewController {
                         messageLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -4),
                         messageLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -1 * self.verticalMargin)
                     ])
+                    titleLabel.setContentHuggingPriority(.defaultHigh, for: .vertical)
+                    messageLabel.setContentHuggingPriority(.defaultLow, for: .vertical)
                 } else {
                     NSLayoutConstraint.activate([
                         messageLabel.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 10),
@@ -383,6 +385,8 @@ final class LoafViewController: UIViewController {
                         messageLabel.trailingAnchor.constraint(equalTo: imageView.leadingAnchor, constant: -4),
                         messageLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -1 * self.verticalMargin)
                     ])
+                    titleLabel.setContentHuggingPriority(.defaultHigh, for: .vertical)
+                    messageLabel.setContentHuggingPriority(.defaultLow, for: .vertical)
                 } else {
                     NSLayoutConstraint.activate([
                         messageLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant:  self.horizontalMargin),
@@ -403,6 +407,8 @@ final class LoafViewController: UIViewController {
                     messageLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -1 * self.horizontalMargin),
                     messageLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -1 * self.verticalMargin)
                 ])
+                titleLabel.setContentHuggingPriority(.defaultHigh, for: .vertical)
+                messageLabel.setContentHuggingPriority(.defaultLow, for: .vertical)
             } else {
                 NSLayoutConstraint.activate([
                     messageLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant:  self.horizontalMargin),

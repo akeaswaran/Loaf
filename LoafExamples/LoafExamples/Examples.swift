@@ -105,7 +105,7 @@ class Examples: UITableViewController {
         case .custom3:
             Loaf(message: example.rawValue, state: .custom(.init(backgroundColor: .black, icon: nil, textAlignment: .center)), sender: self).show()
         case .custom4:
-            Loaf(title: "Test title", message: example.rawValue, state: .custom(.init(backgroundColor: .black, verticalMargin: 8.0, horizontalMargin: 8.0, width: UIScreen.main.bounds.width * 0.75)), sender: self).show()
+            Loaf(title: "Rebrand successful!", message: "Successfully updated your team information!", state: .custom(.init(backgroundColor: .black, verticalMargin: 8.0, horizontalMargin: 8.0, width: UIScreen.main.bounds.width - 30)), sender: self).show()
         }
         
         tableView.deselectRow(at: indexPath, animated: true)
