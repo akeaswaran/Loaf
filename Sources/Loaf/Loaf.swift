@@ -9,9 +9,9 @@
 import UIKit
 
 final public class Loaf {
-    
+
     // MARK: - Specifiers
-    
+
     /// Define a custom style for the loaf.
     public struct Style {
         /// Specifies the position of the icon on the loaf. (Default is `.left`)
@@ -22,45 +22,55 @@ final public class Loaf {
             case left
             case right
         }
-        
+
+        /// Specifies the width of the Loaf. (Default is `.fixed(280)`)
+        ///
+        /// - fixed: Specified as pixel size. i.e. 280
+        /// - screenPercentage: Specified as a ratio to the screen size. This value must be between 0 and 1. i.e. 0.8
+        public enum Width {
+            case fixed(CGFloat)
+            case screenPercentage(CGFloat)
+        }
+
         /// The background color of the loaf.
         let backgroundColor: UIColor
-        
+
         /// The color of the label's title text
         let messageLabelTextColor: UIColor
-        
+
         /// The color of the icon (Assuming it's rendered as template)
         let tintColor: UIColor
-        
+
         /// The font of the message label
         let messageLabelFont: UIFont
-        
+
         /// The color of the label's title text
         let titleLabelTextColor: UIColor
-        
+
         /// The font of the title label
         let titleLabelFont: UIFont
-        
+
         /// The icon on the loaf
         let icon: UIImage?
-        
+
+        /// The alignment of the text within the Loaf
         let textAlignment: NSTextAlignment
-        
+
         /// The position of the icon
         let iconAlignment: IconAlignment
-        
+
         // The top and bottom margins to use for the labels
         let verticalMargin: CGFloat
-        
+
         // The left and right margins to use for the labels
         let horizontalMargin: CGFloat
-        
+
         // The height to use for the icon
         let iconHeight: CGFloat
-        
+
         // The width to use for the view
         let width: CGFloat
-        
+
         public init(backgroundColor: UIColor, messageLabelTextColor: UIColor = .lightText, titleLabelTextColor: UIColor = .white, tintColor: UIColor = .white, messageLabelFont: UIFont = UIFont.systemFont(ofSize: 12, weight: .regular), titleLabelFont: UIFont = UIFont.systemFont(ofSize: 14, weight: .medium), icon: UIImage? = Icon.info, iconHeight: CGFloat = 20.0, textAlignment: NSTextAlignment = .left, iconAlignment: IconAlignment = .left, verticalMargin: CGFloat = 10.0, horizontalMargin: CGFloat = 10.0, width: CGFloat = 280.0) {
             self.backgroundColor = backgroundColor
             self.messageLabelTextColor = messageLabelTextColor
@@ -77,7 +87,7 @@ final public class Loaf {
             self.width = width
         }
     }
-    
+
     /// Defines the loaf's status. (Default is `.info`)
     ///
     /// - success: Represents a success message
@@ -92,7 +102,7 @@ final public class Loaf {
         case info
         case custom(Style)
     }
-    
+
     /// Defines the loaction to display the loaf. (Default is `.bottom`)
     ///
     /// - top: Top of the display
@@ -101,7 +111,7 @@ final public class Loaf {
         case top
         case bottom
     }
-    
+
     /// Defines either the presenting or dismissing direction of loaf. (Default is `.vertical`)
     ///
     /// - left: To / from the left
@@ -112,7 +122,7 @@ final public class Loaf {
         case right
         case vertical
     }
-    
+
     /// Defines the duration of the loaf presentation. (Default is .`avergae`)
     ///
     /// - short: 2 seconds
@@ -125,7 +135,7 @@ final public class Loaf {
         case average
         case long
         case custom(TimeInterval)
-        
+
         var length: TimeInterval {
             switch self {
             case .veryShort: return 1.0
@@ -137,7 +147,7 @@ final public class Loaf {
             }
         }
     }
-    
+
     /// Icons used in basic states
     public enum Icon {
         public static let success = Icons.imageOfSuccess().withRenderingMode(.alwaysTemplate)
@@ -145,8 +155,15 @@ final public class Loaf {
         public static let warning = Icons.imageOfWarning().withRenderingMode(.alwaysTemplate)
         public static let info = Icons.imageOfInfo().withRenderingMode(.alwaysTemplate)
     }
-    
+
+    // Reason a Loaf was dismissed
+    public enum DismissalReason {
+        case tapped
+        case timedOut
+    }
+
     // MARK: - Properties
+    public typealias LoafCompletionHandler = ((DismissalReason) -> Void)?
     var title: String?
     var message: String
     var state: State
@@ -154,9 +171,9 @@ final public class Loaf {
     var duration: Duration = .average
     var presentingDirection: Direction
     var dismissingDirection: Direction
-    var completionHandler: ((Bool) -> Void)? = nil
+    var completionHandler: LoafCompletionHandler = nil
     weak var sender: UIViewController?
-    
+
     // MARK: - Public methods
     public init(title: String? = nil, message: String,
                 state: State = .info,
@@ -172,33 +189,44 @@ final public class Loaf {
         self.dismissingDirection = dismissingDirection
         self.sender = sender
     }
-    
+
     /// Show the loaf for a specified duration. (Default is `.average`)
     ///
     /// - Parameter duration: Length the loaf will be presented
-    public func show(_ duration: Duration = .average, completionHandler: ((Bool) -> Void)? = nil) {
+    public func show(_ duration: Duration = .average, completionHandler: LoafCompletionHandler = nil) {
         self.duration = duration
         self.completionHandler = completionHandler
         LoafManager.shared.queueAndPresent(self)
     }
+
+	/// Manually dismiss a currently presented Loaf
+	///
+	/// - Parameter animated: Whether the dismissal will be animated
+	public static func dismiss(sender: UIViewController, animated: Bool = true){
+		guard LoafManager.shared.isPresenting else { return }
+		guard let vc = sender.presentedViewController as? LoafViewController else { return }
+		vc.dismiss(animated: animated) {
+			vc.delegate?.loafDidDismiss()
+		}
+	}
 }
 
 final fileprivate class LoafManager: LoafDelegate {
     static let shared = LoafManager()
-    
+
     fileprivate var queue = Queue<Loaf>()
     fileprivate var isPresenting = false
-    
+
     fileprivate func queueAndPresent(_ loaf: Loaf) {
         queue.enqueue(loaf)
         presentIfPossible()
     }
-    
+
     func loafDidDismiss() {
         isPresenting = false
         presentIfPossible()
     }
-    
+
     fileprivate func presentIfPossible() {
         guard isPresenting == false, let loaf = queue.dequeue(), let sender = loaf.sender else { return }
         isPresenting = true
@@ -214,7 +242,7 @@ protocol LoafDelegate: AnyObject {
 
 final class LoafViewController: UIViewController {
     var loaf: Loaf
-    
+
     var titleLabelFont = UIFont.systemFont(ofSize: 14, weight: .medium)
     let messageLabel = UILabel()
     let imageView = UIImageView(image: nil)
@@ -228,14 +256,15 @@ final class LoafViewController: UIViewController {
     var messageLabelFont = UIFont.systemFont(ofSize: 12, weight: .regular)
     var textAlignment: NSTextAlignment = .left
     var transDelegate: UIViewControllerTransitioningDelegate
-    
+
     weak var delegate: LoafDelegate?
-    
+
     init(_ toast: Loaf) {
         self.loaf = toast
         self.transDelegate = Manager(loaf: toast, size: .zero)
         super.init(nibName: nil, bundle: nil)
-        
+
+        var width: CGFloat?
         if case let Loaf.State.custom(style) = loaf.state {
             self.messageLabelFont = style.messageLabelFont
             self.titleLabelFont = style.titleLabelFont
@@ -245,11 +274,11 @@ final class LoafViewController: UIViewController {
             self.loafWidth = style.width
             self.hasImage = (style.icon != nil)
             self.iconHeight = (style.icon != nil) ? style.iconHeight : 0.0
-            
+
             self.titleLabelTextColor = style.titleLabelTextColor
             self.messageLabelTextColor = style.messageLabelTextColor
         }
-        
+
         var calcValue = self.loaf.message.heightWithConstrainedWidth(width: self.loafWidth - (self.horizontalMargin * 2) - ((self.hasImage) ? (self.iconHeight + self.horizontalMargin) : 0), font: messageLabelFont)
         var height = max(calcValue, 20)
         if (loaf.title != nil) {
@@ -258,15 +287,15 @@ final class LoafViewController: UIViewController {
         }
         preferredContentSize = CGSize(width: self.loafWidth, height: max(height, self.iconHeight) + (2.0 * self.verticalMargin))
     }
-    
-    
+
+
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         messageLabel.numberOfLines = 0
         messageLabel.lineBreakMode = .byWordWrapping
         if (loaf.title == nil) {
@@ -288,11 +317,11 @@ final class LoafViewController: UIViewController {
         messageLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         messageLabel.translatesAutoresizingMaskIntoConstraints = false
         messageLabel.sizeToFit()
-        
+
         imageView.tintColor = .white
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        
+
         switch loaf.state {
         case .success:
             imageView.image = Loaf.Icon.success
@@ -317,31 +346,31 @@ final class LoafViewController: UIViewController {
             constrainWithIconAlignment(style.iconAlignment, showsIcon: imageView.image != nil)
             self.view.setNeedsLayout()
         }
-        
+
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
         view.addGestureRecognizer(tapGesture)
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + loaf.duration.length, execute: {
             self.dismiss(animated: true) { [weak self] in
                 self?.delegate?.loafDidDismiss()
-                self?.loaf.completionHandler?(false)
+                self?.loaf.completionHandler?(.timedOut)
             }
         })
     }
-    
+
     @objc private func handleTap() {
         dismiss(animated: true) { [weak self] in
             self?.delegate?.loafDidDismiss()
-            self?.loaf.completionHandler?(true)
+            self?.loaf.completionHandler?(.tapped)
         }
     }
-    
+
     private func constrainWithIconAlignment(_ alignment: Loaf.Style.IconAlignment, showsIcon: Bool = true) {
         view.addSubview(messageLabel)
-        
+
         if showsIcon {
             view.addSubview(imageView)
-            
+
             switch alignment {
             case .left:
                 NSLayoutConstraint.activate([
@@ -379,11 +408,11 @@ final class LoafViewController: UIViewController {
 
 private struct Queue<T> {
     fileprivate var array = [T]()
-    
+
     mutating func enqueue(_ element: T) {
         array.append(element)
     }
-    
+
     mutating func dequeue() -> T? {
         if array.isEmpty {
             return nil
@@ -392,4 +421,3 @@ private struct Queue<T> {
         }
     }
 }
-
