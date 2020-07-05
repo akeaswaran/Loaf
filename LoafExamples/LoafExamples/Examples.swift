@@ -54,7 +54,7 @@ class Examples: UITableViewController {
         if isDarkMode {
             Loaf(message: "Switched to light mode", state: .custom(.init(backgroundColor: .black, icon: UIImage(named: "moon"))), sender: self).show(.short)
         } else {
-            Loaf(message: "Switched to dark mode", state: .custom(.init(backgroundColor: .white, messageLabelTextColor: .black, tintColor: .black, icon: UIImage(named: "moon"))), sender: self).show(.short)
+            Loaf(message: "Switched to dark mode", state: .custom(Loaf.Style(backgroundColor: .white, messageTextAttributes: [NSAttributedString.Key.foregroundColor : UIColor.black], tintColor: .black, icon: UIImage(named: "moon"))), sender: self).show(.short)
         }
 
         tableView.reloadData()
@@ -89,7 +89,7 @@ class Examples: UITableViewController {
             Loaf(message: example.rawValue, state: .info, sender: self).show()
 
         case .bottom:
-            Loaf(example.rawValue, sender: self).show { dismissalType in
+            Loaf(message: example.rawValue, sender: self).show { dismissalType in
                 switch dismissalType {
                 case .tapped: print("Tapped!")
                 case .timedOut: print("Timmed out!")
@@ -108,13 +108,13 @@ class Examples: UITableViewController {
             Loaf(message: example.rawValue, presentingDirection: .left, dismissingDirection: .vertical, sender: self).show(.short)
 
         case .custom1:
-            Loaf(message: example.rawValue, state: .custom(.init(backgroundColor: .purple, messageLabelTextColor: .yellow, tintColor: .green, messageLabelFont: .systemFont(ofSize: 18, weight: .bold), icon: Loaf.Icon.success)), sender: self).show()
+            Loaf(message: example.rawValue, state: .custom(Loaf.Style(backgroundColor: .purple, messageTextAttributes: [NSAttributedString.Key.font : UIFont.systemFont(ofSize: 18, weight: .bold), NSAttributedString.Key.foregroundColor : UIColor.yellow], icon: Loaf.Icon.success)), sender: self).show()
         case .custom2:
             Loaf(message: example.rawValue, state: .custom(.init(backgroundColor: .purple, iconAlignment: .right)), sender: self).show()
         case .custom3:
             Loaf(message: example.rawValue, state: .custom(.init(backgroundColor: .black, icon: nil, textAlignment: .center)), sender: self).show()
         case .custom4:
-            Loaf(title: "Rebrand successful!", message: example.rawValue, state: .custom(.init(backgroundColor: .black, verticalMargin: 8.0, horizontalMargin: 8.0, width: UIScreen.main.bounds.width - 30)), sender: self).show()
+            Loaf(title: "Rebrand successful!", message: example.rawValue, state: .custom(Loaf.Style(backgroundColor: .black, width: .screenPercentage(0.80))), sender: self).show()
         }
 
         tableView.deselectRow(at: indexPath, animated: true)
