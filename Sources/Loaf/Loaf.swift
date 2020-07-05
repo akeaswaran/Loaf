@@ -237,6 +237,22 @@ final public class Loaf {
         self.sender = sender
     }
     
+    // MARK: - Public methods
+    public init(_ message: String,
+                state: State = .info,
+                location: Location = .bottom,
+                presentingDirection: Direction = .vertical,
+                dismissingDirection: Direction = .vertical,
+                sender: UIViewController) {
+        self.title = nil
+        self.message = message
+        self.state = state
+        self.location = location
+        self.presentingDirection = presentingDirection
+        self.dismissingDirection = dismissingDirection
+        self.sender = sender
+    }
+    
     /// Show the loaf for a specified duration. (Default is `.average`)
     ///
     /// - Parameter duration: Length the loaf will be presented
